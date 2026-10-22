@@ -1,0 +1,33 @@
+name: Restore original podcast and video files
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'media-parts/**'
+      - '.github/workflows/restore-media.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore-media:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout website
+        uses: actions/checkout@v4
+      - name: Restore podcast, video, and scripts assets
+        run: python3 .github/scripts/restore_media.py
+      - name: Commit restored files to main
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A assets media-parts
+          if git diff --cached --quiet; then
+            echo 'Everything already restored.'
+          else
+            git commit -m 'Include all original podcast and video files [skip ci]'
+            git push origin HEAD:main
+          fi
